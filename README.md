@@ -1,175 +1,94 @@
 # Norwegian Dictionary Lookup
 
-A lightweight Windows utility that provides instant Norwegian ↔ English translations with a simple hotkey. Perfect for language learners reading Norwegian text!
+A small Windows utility for reading Norwegian. Select a word in any application, press `Alt+P+N`, and a popup shows the translation next to your cursor.
 
 ![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
-## ✨ Features
+Translations come from [Lexin](https://lexin.oslomet.no/), the Bokmål–English dictionary published by Oslo Metropolitan University. Lookups work in both directions and need an internet connection.
 
-- **Instant Translations**: Select any word and press `Alt+P+N` ("på norsk") to see translations
-- **Bidirectional**: Works for both Norwegian → English and English → Norwegian
-- **Non-Intrusive**: Runs silently in the background, no window clutter
-- **Smart Popups**: Translation appears near your cursor, automatically positioned on the correct monitor
-- **Lexin Dictionary**: Uses the authoritative Norwegian Lexin Bokmål-English dictionary
-- **Auto-Updates**: Automatically checks for new versions once per day
-- **Lightweight**: Minimal resource usage, starts with Windows
+## Install
 
-## 🚀 Quick Start
+1. Download `NorwegianDictionary_Setup.exe` from [Releases](https://github.com/ethanphamilton/norsk_lookup/releases).
+2. Run the installer. It offers to start the app with Windows.
+3. The app runs in the background. There is no window.
 
-### Installation
+## Use
 
-1. Download the latest `NorwegianDictionary_Setup.exe` from [Releases](https://github.com/oslo-c/norsk_lookup/releases)
-2. Run the installer
-3. Choose whether to start automatically with Windows (recommended)
-4. The app starts immediately - you're ready to go!
+Highlight a word, press `Alt+P+N` — the hotkey stands for "på norsk" — and a popup appears near the cursor. Click anywhere to dismiss it.
 
-### Usage
-
-1. **Select a word** - Highlight any Norwegian or English word in any application
-2. **Press `Alt+P+N`** - The hotkey for "på norsk"
-3. **See translation** - A popup appears showing the translation and part of speech
-4. **Click anywhere** to dismiss the popup
-
-That's it!
-
-## 📖 Examples
-
-**Norwegian → English:**
 ```
-Select: "hund"
-Press: Alt+P+N
-Result: hund (noun) → dog
+hund   → hund (noun) → dog
+house  → hus (noun) → house
+bank   → bank (noun) → bank
+          bank (noun) → bench
 ```
 
-**English → Norwegian:**
-```
-Select: "house"
-Press: Alt+P+N
-Result: hus (noun) → house
-```
+Words with several senses list each one. If nothing is found, the popup says so.
 
-**Multiple meanings:**
-```
-Select: "bank"
-Press: Alt+P+N
-Result: 
-bank (noun) → bank
-bank (noun) → bench
-```
+Selection is read through the Windows UI Automation API rather than the clipboard, so your clipboard contents are left alone and the hotkey works in browsers, Office, PDF readers and editors alike. On a multi-monitor setup the popup opens on the screen holding the cursor.
 
-## 💡 Tips
+The app checks for a new release once a day. When one exists it shows a notification; clicking it opens the release page in your browser. Nothing is downloaded or installed without you.
 
-- Works in **any application**: browsers, Word, PDFs, text editors, etc.
-- **Multi-monitor support**: Popup stays on the screen where your cursor is
-- **Click anywhere outside** the popup to close it
-- **Click on the popup itself** to close it immediately
-- If no translation is found, the popup will tell you
+## Troubleshooting
 
-## 🔧 How It Works
+**The hotkey does nothing.** Confirm `NorwegianDictionary.exe` is running in Task Manager. If another application has claimed `Alt+P+N`, that application wins and the app cannot see the keypress.
 
-The app uses:
-- **UI Automation API** to capture selected text (no clipboard interference!)
-- **Lexin Dictionary API** from Oslo Metropolitan University
-- **Windows hotkeys** for global keyboard monitoring
-- **Tkinter popups** for clean, styled display windows
+**No popup appears.** The text must be highlighted before you press the hotkey. Single words work more reliably than phrases. Lookups require an internet connection.
 
-## 🛠️ Building from Source
+**It does not start with Windows.** Enable "Norwegian Dictionary Lookup" under Task Manager → Startup, or reinstall and select the startup option.
 
-### Prerequisites
+## Building from source
 
-- Python 3.8+
-- Windows 10/11
-- [Inno Setup 6](https://jrsoftware.org/isdl.php) (for creating installer)
-
-### Setup
+Requires Python 3.8+, Windows 10 or 11, and [Inno Setup 6](https://jrsoftware.org/isdl.php) to produce the installer.
 
 ```bash
-# Clone the repository
-git clone https://github.com/oslo-c/norsk_lookup.git
+git clone https://github.com/ethanphamilton/norsk_lookup.git
 cd norsk_lookup
 
-# Create virtual environment
 python -m venv .venv
 .venv\Scripts\activate
-
-# Install dependencies
 pip install -r requirements.txt
 ```
 
-### Development
+Run from source:
 
-Run directly with Python:
 ```bash
 cd src
 python main.py
 ```
 
-### Building
+Build:
 
-Build the executable:
-```bash
-build_scripts\build_installer.bat
-```
+| Command | Produces |
+| --- | --- |
+| `build_scripts\build_installer.bat` | `Output\NorwegianDictionary_Setup.exe` |
+| `build_scripts\build_debug.bat` | A build with a console window attached |
+| `build_scripts\cleanbuild.bat` | Removes build artifacts |
 
-Or for a debug build with console output:
-```bash
-build_scripts\build_debug.bat
-```
+### Releasing
 
-The installer will be created in `Output\NorwegianDictionary_Setup.exe`
+`UpdateChecker.GITHUB_USER` and `GITHUB_REPO` in `src/update_checker.py` are compiled into each build, so an installed copy checks whichever account and repository were current when it was built. If the account is renamed, publish a release before the previous name becomes available to anyone else — GitHub's rename redirect is the only thing keeping existing installs pointed at the right place, and it stops working as soon as someone else registers the old name.
 
-### Clean Build
+Keep `version.json` in step with `src/version.py`. It is the fallback the updater reads when the GitHub API is unreachable, and a version there without a matching published release will advertise an update that does not exist.
 
-To remove all build artifacts:
-```bash
-build_scripts\cleanbuild.bat
-```
+## Source layout
 
-## 🐛 Troubleshooting
+| File | Responsibility |
+| --- | --- |
+| `src/main.py` | Application entry point; wires the hotkey, capture, lookup and popup together. |
+| `src/hotkey_monitor.py` | Polls for the `Alt+P+N` combination via `GetAsyncKeyState`. |
+| `src/text_capture.py` | Reads the current selection through UI Automation. |
+| `src/lexin_api.py` | Queries the Lexin dictionary and parses the response. |
+| `src/popup_ui.py` | Tkinter popup, positioned on the cursor's monitor. |
+| `src/update_checker.py` | Daily release check against the GitHub API, with `version.json` as a fallback. |
+| `src/version.py` | Version string and application name. |
 
-### Hotkey not working?
-- Make sure the app is running (check Task Manager for `NorwegianDictionary.exe`)
-- Try restarting the application
-- Another app might be using the same hotkey combination
+## Licence
 
-### No translation popup appears?
-- Ensure you've **highlighted** the text before pressing the hotkey
-- Try selecting just a single word
-- Check that you have an internet connection (required for dictionary lookups)
+MIT — see [LICENSE](LICENSE).
 
-### Popup appears on wrong monitor?
-- This should be automatic - if it's not working, please report a bug!
+Dictionary data is provided by [Lexin](https://lexin.oslomet.no/) at Oslo Metropolitan University and remains theirs. Built with Python, PyInstaller and Inno Setup.
 
-### App not starting with Windows?
-- Open Task Manager → Startup tab
-- Enable "Norwegian Dictionary Lookup"
-- Or reinstall and check the startup option
-
-## 🤝 Contributing
-
-Contributions welcome! Feel free to:
-- Report bugs
-- Suggest features
-- Submit pull requests
-
-## 📜 License
-
-MIT License - feel free to use and modify!
-
-## 🙏 Credits
-
-- Dictionary data from [Lexin](https://lexin.oslomet.no/) by Oslo Metropolitan University
-- Built with Python, PyInstaller, and Inno Setup
-- Inspired by the need for quick translations while reading Norwegian text
-
-## 📞 Support
-
-Having issues? Check the [Issues](https://github.com/YOUR_USERNAME/YOUR_REPO_NAME/issues) page or create a new issue.
-
----
-
-**Made with ❤️ for Norwegian language learners**
-
-*Lykke til med norsk!* (Good luck with Norwegian!)
+Bug reports and pull requests are welcome via [Issues](https://github.com/ethanphamilton/norsk_lookup/issues).

@@ -70,7 +70,12 @@ class UpdateInfo:
 class UpdateChecker:
     """Checks for application updates on GitHub."""
     
-    GITHUB_USER = "oslo-c"
+    # This value is compiled into every shipped build, so an installed copy
+    # keeps checking whichever account was current when it was built. If the
+    # account is ever renamed, publish a release before the old name becomes
+    # available to anyone else: GitHub's rename redirect is what keeps existing
+    # installs working, and it stops the moment someone else registers the name.
+    GITHUB_USER = "ethanphamilton"
     GITHUB_REPO = "norsk_lookup"
     
     API_URL = f"https://api.github.com/repos/{GITHUB_USER}/{GITHUB_REPO}/releases/latest"
